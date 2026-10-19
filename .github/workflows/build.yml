@@ -66,6 +66,16 @@ jobs:
           --exclude-module numpy
           formatix.py
 
+      # macOS runners are low on free space; hdiutil fails with
+      # "No space left on device" without this
+      - name: Free disk space (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          sudo rm -rf /Users/runner/Library/Android/sdk
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          df -h /
+
       - name: Package macOS DMG
         if: runner.os == 'macOS'
         shell: bash
