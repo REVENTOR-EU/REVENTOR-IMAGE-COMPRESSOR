@@ -83,7 +83,16 @@ jobs:
           mkdir -p dist_out dmg_staging
           cp -r "dist/REVENTOR-Image-Compressor.app" dmg_staging/
           ln -s /Applications dmg_staging/Applications
-          hdiutil create -volname "REVENTOR Image Compressor"             -srcfolder dmg_staging -ov -format UDZO             "dist_out/REVENTOR-Image-Compressor-macOS.dmg"
+          # hdiutil's auto-size estimation fails on GitHub runners with a
+          # bogus "No space left on device", so size the image explicitly
+          SIZE_MB=$(du -sm dmg_staging | cut -f1)
+          hdiutil create -size $((SIZE_MB + 200))m -fs HFS+ \
+            -volname "REVENTOR Image Compressor" blank.dmg
+          hdiutil attach blank.dmg -mountpoint /Volumes/pkg -nobrowse
+          cp -R dmg_staging/. /Volumes/pkg/
+          hdiutil detach /Volumes/pkg
+          hdiutil convert blank.dmg -format UDZO -o "dist_out/REVENTOR-Image-Compressor-macOS.dmg"
+          rm -f blank.dmg
 
       - name: Package Linux archive with installer
         if: runner.os == 'Linux'
